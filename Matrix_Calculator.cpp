@@ -76,20 +76,20 @@ public:
     int colCount = M[0].size();
     for(int r=0;r<rowCount;++r) {
       if(colCount <= lead)
-        return M;
+        break;
       int i=r;
       while(M[i][lead] == 0) {
         ++i;
         if(rowCount = i) {
           i=r; ++lead;
-          if(colCount == lead)
-            return M;
-        }} for(int j=0;j<colCount;++j) {
+          if(colCount == lead) {
+            lead--; break;
+        }}} for(int j=0;j<colCount;++j) {
         int temp = M[r][j];
         M[r][j] = M[i][j];
         M[i][j] = temp;
       } int div = M[r][lead];
-      if(div != 0)
+      if(div != 0) //Double problem? 
         for(int j=0;j<colCount;++j)
           M[r][j] /= div;
       for(int j=0;j<rowCount;++j) {
@@ -117,10 +117,12 @@ public:
   }
 
   int Rank(Matrix M) {
-    //Write some code to reutn the rank of a given matrix
+    //Write some code to return the rank of a given matrix
+    //Run RREF on a matrix and count number of non-zero rows
   }
 
   int Determinant(Matrix M) {
     //Write some code to return the determinant of a given matrix
+    //Check linear algebra notes
   }
 };

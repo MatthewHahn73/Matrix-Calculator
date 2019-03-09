@@ -1,7 +1,7 @@
 /*
 Matrix Manipulation Algorithm
 Written by Matthew Hahn
-Version 0.1.5
+Version 0.1.7
 
 Input command (Add, Multiply, RREF, etc)
 Input desired graphs/values via legal brackets
@@ -14,9 +14,8 @@ Main
 
 Matrix_Calculator
   -Row reduction doesn't reduce to row reduced echelon form always. Why?
-    -Only seems to return wrong results when the first few rows are 5s
-    -Always returns a fraction less than 1
-      -Double problem?
+    -Double problem?
+      -Seems to work when passed values are integers
   -Finish inversion method
     -Look into finding inverse via determinant instead of using identity
   -Add Determinant method
@@ -31,13 +30,13 @@ Matrix_Calculator
 struct UserCommand{
   std::string Command;
   Matrix M_1, M_2;
-  double Constant;
+  double Constant = INT_MIN;
 };
 
 UserCommand ReadIn(std::string UserString) {
   UserCommand toReturn; int i;
   std::vector<std::string> LC{"Add","Sub","Multiply",
-  "SMultiply","Transpose","Echelon","Inverse","Exit","Help"};
+  "Smultiply","Transpose","Echelon","Inverse","Exit","Help"};
   try {
     for(i=0;i<UserString.size();++i) { //Gets the user Command
       if(!isspace(UserString[i])) {
@@ -65,7 +64,7 @@ UserCommand ReadIn(std::string UserString) {
         Brackets.pop_back();
         if(Brackets.size() != 0)
           toReturn.M_1.back().push_back(std::stod(toPass)); toPass.clear();
-      } else if((isdigit(UserString[j]) || UserString[j] == '.') && Brackets.size() == 2) {
+      } else if((isdigit(UserString[j]) || UserString[j] == '.' || UserString[j] == '-') && Brackets.size() == 2) {
         toPass.push_back(UserString[j]);
       } else if(UserString[j] == ',' && !Brackets.empty()) {
         toReturn.M_1.back().push_back(std::stod(toPass)); toPass.clear();
@@ -86,7 +85,8 @@ UserCommand ReadIn(std::string UserString) {
           Brackets.pop_back();
           if(Brackets.size() != 0)
             toReturn.M_2.back().push_back(std::stod(toPass)); toPass.clear();
-        } else if((isdigit(UserString[k]) || UserString[k] == '.') && Brackets.size() == 2) {
+        } else if((isdigit(UserString[k]) || UserString[k] == '-'
+        || UserString[k] == '.') && Brackets.size() == 2) {
           toPass.push_back(UserString[k]);
         } else if(UserString[k] == ',' && !Brackets.empty()) {
           toReturn.M_2.back().push_back(std::stod(toPass)); toPass.clear();
@@ -96,14 +96,15 @@ UserCommand ReadIn(std::string UserString) {
       } catch(const std::invalid_argument& e) {
         toReturn.Command = "Wrong 2nd parameter syntax";
         return toReturn;
-      }
-  } else if(j != UserString.size() && isdigit(UserString[j+1])) {
+      } toPass.clear();
+  } else if(j != UserString.size() && (isdigit(UserString[j+1])
+  || UserString[j+1] == '-' || UserString[j+1] == '.')) {
     try {
-      for(l=j+1;l<UserString.size();++l) {
+      for(l=j+1;l<UserString.size();++l)
         toPass.push_back(UserString[l]);
-        toReturn.Constant = std::stod(toPass);
-        toPass.clear();
-    }} catch(const std::exception& e) {
+      toReturn.Constant = std::stod(toPass);
+      std::cout << toReturn.Constant << "\n";
+    } catch(const std::exception& e) {
         toReturn.Command = "Wrong constant syntax";
         return toReturn;
   }} return toReturn;
@@ -114,7 +115,7 @@ void printError(std::string Error) {
 }
 
 int main() {
-  printf("Matrix Calculator\nVersion 0.1.5\n\n");
+  printf("Matrix Calculator\nVersion 0.1.7\n\n");
   Matrix_Manipulation *Mod = new Matrix_Manipulation();
   Matrix Solution; UserCommand UC; std::string UserString;
   while(true) {
@@ -135,23 +136,35 @@ int main() {
       } else
         printError("Illegal matrice sizes");
     } else if(UC.Command == "Multiply") {
-      if(UC.M_1.size() != UC.M_2[0].size()) {
+      if(UC.M_1[0].size() == UC.M_2.size()) {
         Solution = Mod->Multiply(UC.M_1, UC.M_2);
         Mod->printMatrix(Solution);
       } else
         printError("Illegal matrice sizes");
-    } else if(UC.Command == "SMultiply") {
-      Solution = Mod->S_Multiply(UC.M_1, UC.Constant);
-      Mod->printMatrix(Solution);
-    } else if(UC.Command == "Tranpose") {
-      Solution = Mod->Transpose(UC.M_1);
-      Mod->printMatrix(Solution);
+    } else if(UC.Command == "Smultiply") {
+      if(UC.M_2.empty() && UC.Constant != INT_MIN) {
+        Solution = Mod->S_Multiply(UC.M_1, UC.Constant);
+        Mod->printMatrix(Solution);
+      } else
+        printError("Illegal format");
+    } else if(UC.Command == "Transpose") {
+      if(UC.M_2.empty() && UC.Constant == INT_MIN) {
+        Solution = Mod->Transpose(UC.M_1);
+        Mod->printMatrix(Solution);
+      } else
+        printError("Illegal format");
     } else if(UC.Command == "Echelon") {
-      Solution = Mod->RR_Echelon_Form(UC.M_1);
-      Mod->printMatrix(Solution);
+      if(UC.M_2.empty() && UC.Constant == INT_MIN) {
+        Solution = Mod->RR_Echelon_Form(UC.M_1);
+        Mod->printMatrix(Solution);
+      } else
+        printError("Illegal format");
     } else if(UC.Command == "Inverse") {
-      Solution = Mod->Inverse(UC.M_1);
-      Mod->printMatrix(Solution);
+      if(UC.M_2.empty() && UC.Constant == INT_MIN) {
+        Solution = Mod->Inverse(UC.M_1);
+        Mod->printMatrix(Solution);
+      } else
+        printError("Illegal format");
     } else if(UC.Command == "Exit") {
       break; exit(EXIT_SUCCESS);
     } else if(UC.Command == "Help") {
@@ -167,7 +180,12 @@ int main() {
       "  Legal Syntax\n"
       "   -Command{{Row 1}{Row 2}}\n"
       "   -Command{{Row 1}{Row 2}},{{Row 1}{Row 2}}\n"
-      "   -Command{{Row 1}{Row 2}},Constant\n");
+      "   -Command{{Row 1}{Row 2}},Constant\n"
+      "  Miscellaneous\n"
+      "   -Rows/Columns must be the same length as other Rows/Columns\n"
+      "   -Arithmetic is limited to 4 byte integers\n"
+      "   -INT_MIN (-2147483647) is unavailable\n"
+      "   -Unnecessary spaces are not recommended\n");
     } else
       printError(UC.Command);
   } return 0;
