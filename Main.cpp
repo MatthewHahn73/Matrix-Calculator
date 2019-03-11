@@ -1,23 +1,17 @@
 /*
 Matrix Manipulation Algorithm
 Written by Matthew Hahn
-Version 0.1.7
+Version 0.2.2
 
 Input command (Add, Multiply, RREF, etc)
 Input desired graphs/values via legal brackets
 
 TODO:
 Main
-  -Clean up the exception handling
-    -Spaces after command and after dividing ',' between matrices throws error.
-      -Find why
+  -Bulletproof the code
+    -Test each method rigorously and compare to actual results
 
 Matrix_Calculator
-  -Row reduction doesn't reduce to row reduced echelon form always. Why?
-    -Double problem?
-      -Seems to work when passed values are integers
-  -Finish inversion method
-    -Look into finding inverse via determinant instead of using identity
   -Add Determinant method
   -Add Rank method
   -Comment previous methods to more detail
@@ -33,18 +27,31 @@ struct UserCommand{
   double Constant = INT_MIN;
 };
 
+int ValidateSize(Matrix M) {
+  int currentMeta = M[0].size();
+  for(int i=0;i<M.size();++i)
+    if(M[i].size() != currentMeta)
+      return -1;
+  return currentMeta;
+}
+
+void printError(std::string Error) {
+  std::cout << "  Error: " + Error << "; " << "See 'help'\n";
+}
+
 UserCommand ReadIn(std::string UserString) {
   UserCommand toReturn; int i;
   std::vector<std::string> LC{"Add","Sub","Multiply",
-  "Smultiply","Transpose","Echelon","Inverse","Exit","Help"};
+  "Smultiply","Transpose","RREF","Inverse","Rank","Determ",
+  "Exit","Help"};
   try {
+    UserString.erase(std::remove(UserString.begin(),UserString.end(),' '), UserString.end());
     for(i=0;i<UserString.size();++i) { //Gets the user Command
-      if(!isspace(UserString[i])) {
-        if(UserString[i+1] == '{') {
+        if(i+1 < UserString.size() && UserString[i+1] == '{') {
           toReturn.Command.push_back(UserString[i]); break;
         } else
           toReturn.Command.push_back(UserString[i]);
-      }} toReturn.Command[0] = toupper(toReturn.Command[0]);
+      } toReturn.Command[0] = toupper(toReturn.Command[0]);
     if(!(std::find(LC.begin(), LC.end(), toReturn.Command) != LC.end()))
       throw "Unknown Command";
     } catch(const std::exception& e) {
@@ -103,66 +110,93 @@ UserCommand ReadIn(std::string UserString) {
       for(l=j+1;l<UserString.size();++l)
         toPass.push_back(UserString[l]);
       toReturn.Constant = std::stod(toPass);
-      std::cout << toReturn.Constant << "\n";
     } catch(const std::exception& e) {
         toReturn.Command = "Wrong constant syntax";
         return toReturn;
   }} return toReturn;
 }
 
-void printError(std::string Error) {
-  std::cout << "  Error: " + Error << "; " << "See 'help'\n";
-}
-
 int main() {
-  printf("Matrix Calculator\nVersion 0.1.7\n\n");
+  printf("Matrix Calculator\nVersion 0.2.2\n\n");
   Matrix_Manipulation *Mod = new Matrix_Manipulation();
-  Matrix Solution; UserCommand UC; std::string UserString;
+  Matrix Matrix_Solution; int Integer_Solution;
+  UserCommand UC; std::string UserString;
   while(true) {
     printf(">>"); std::getline(std::cin,UserString);
     UC = ReadIn(UserString);
     if(UC.Command == "Add") {
       if((UC.M_1.size() == UC.M_2.size()) &&
-      (UC.M_1[0].size() == UC.M_2[0].size())) {
-        Solution = Mod->Add(UC.M_1, UC.M_2);
-        Mod->printMatrix(Solution);
+      (ValidateSize(UC.M_1) == ValidateSize(UC.M_2))) {
+        Matrix_Solution = Mod->Add(UC.M_1, UC.M_2);
+        Mod->printMatrix(Matrix_Solution);
       } else
-        printError("Illegal matrice sizes");
+        printError("Illegal matrices' size");
     } else if(UC.Command == "Sub") {
       if((UC.M_1.size() == UC.M_2.size()) &&
-      (UC.M_1[0].size() == UC.M_2[0].size())) {
-        Solution = Mod->Subtract(UC.M_1, UC.M_2);
-        Mod->printMatrix(Solution);
+      (ValidateSize(UC.M_1) == ValidateSize(UC.M_2))) {
+        Matrix_Solution = Mod->Subtract(UC.M_1, UC.M_2);
+        Mod->printMatrix(Matrix_Solution);
       } else
-        printError("Illegal matrice sizes");
+        printError("Illegal matrices' size");
     } else if(UC.Command == "Multiply") {
-      if(UC.M_1[0].size() == UC.M_2.size()) {
-        Solution = Mod->Multiply(UC.M_1, UC.M_2);
-        Mod->printMatrix(Solution);
+      if(ValidateSize(UC.M_1) == UC.M_2.size()) {
+        Matrix_Solution = Mod->Multiply(UC.M_1, UC.M_2);
+        Mod->printMatrix(Matrix_Solution);
       } else
-        printError("Illegal matrice sizes");
+        printError("Illegal matrices' size");
     } else if(UC.Command == "Smultiply") {
       if(UC.M_2.empty() && UC.Constant != INT_MIN) {
-        Solution = Mod->S_Multiply(UC.M_1, UC.Constant);
-        Mod->printMatrix(Solution);
+        if(ValidateSize(UC.M_1) != -1) {
+          Matrix_Solution = Mod->S_Multiply(UC.M_1, UC.Constant);
+          Mod->printMatrix(Matrix_Solution);
+        } else
+        printError("Illegal matrix size");
       } else
         printError("Illegal format");
     } else if(UC.Command == "Transpose") {
       if(UC.M_2.empty() && UC.Constant == INT_MIN) {
-        Solution = Mod->Transpose(UC.M_1);
-        Mod->printMatrix(Solution);
+        if(ValidateSize(UC.M_1) != -1) {
+          Matrix_Solution = Mod->Transpose(UC.M_1);
+          Mod->printMatrix(Matrix_Solution);
+        } else
+          printError("Illegal matrix size");
       } else
         printError("Illegal format");
-    } else if(UC.Command == "Echelon") {
+    } else if(UC.Command == "RREF") {
       if(UC.M_2.empty() && UC.Constant == INT_MIN) {
-        Solution = Mod->RR_Echelon_Form(UC.M_1);
-        Mod->printMatrix(Solution);
+        if(ValidateSize(UC.M_1) != -1) {
+          Matrix_Solution = Mod->RR_Echelon_Form(UC.M_1, UC.M_1.size());
+          Mod->printMatrix(Matrix_Solution);
+        } else
+          printError("Illegal matrix size");
       } else
         printError("Illegal format");
     } else if(UC.Command == "Inverse") {
       if(UC.M_2.empty() && UC.Constant == INT_MIN) {
-        Solution = Mod->Inverse(UC.M_1);
-        Mod->printMatrix(Solution);
+        int Size = ValidateSize(UC.M_1);
+         if(Size != -1 && Size == UC.M_1.size()) {
+          Matrix_Solution = Mod->Inverse(UC.M_1);
+          Mod->printMatrix(Matrix_Solution);
+        } else
+          printError("Illegal matrix size");
+      } else
+        printError("Illegal format");
+    } else if(UC.Command == "Rank") {
+      if(UC.M_2.empty() && UC.Constant == INT_MIN) {
+        if(ValidateSize(UC.M_1) != -1) {
+          Integer_Solution = Mod->Rank(UC.M_1);
+          std::cout << Integer_Solution << "\n";
+        } else
+          printError("Illegal matrix size");
+      } else
+        printError("Illegal format");
+    } else if(UC.Command == "Determ") {
+      if(UC.M_2.empty() && UC.Constant == INT_MIN) {
+        if(ValidateSize(UC.M_1) != -1) {
+          Integer_Solution = Mod->Determinant(UC.M_1);
+          std::cout << Integer_Solution << "\n";
+        } else
+          printError("Illegal matrix size");
       } else
         printError("Illegal format");
     } else if(UC.Command == "Exit") {
@@ -174,18 +208,19 @@ int main() {
       "   -Multiply (Multiplies two legally sized matrices)\n"
       "   -SMultiply (Multiplies a matrix by a constant)\n"
       "   -Tranpose (Transposes a single matrix)\n"
-      "   -Echelon (Reduces a matrix to row reduced echelon form)\n"
-      "   -Inverse (Gives the inverse of a single given matrix)\n"
-      "   -Exit\n"
+      "   -RREF (Reduces a matrix to row reduced echelon form)\n"
+      "   -Inverse (Gives the inverse of a given matrix)\n"
+      "   -Rank (Gives the rank of a given matrix)\n"
+      "   -Determ (Gives the determinant of a given matrix)\n"
+      "   -Exit\n\n"
       "  Legal Syntax\n"
-      "   -Command{{Row 1}{Row 2}}\n"
+      "   -Command{{Row 1}{Row 2}{Row 3}}\n"
       "   -Command{{Row 1}{Row 2}},{{Row 1}{Row 2}}\n"
-      "   -Command{{Row 1}{Row 2}},Constant\n"
+      "   -Command{{Row 1}{Row 2}},Constant\n\n"
       "  Miscellaneous\n"
       "   -Rows/Columns must be the same length as other Rows/Columns\n"
       "   -Arithmetic is limited to 4 byte integers\n"
-      "   -INT_MIN (-2147483647) is unavailable\n"
-      "   -Unnecessary spaces are not recommended\n");
+      "   -INT_MIN (-2147483647) is unavailable\n");
     } else
       printError(UC.Command);
   } return 0;
