@@ -1,7 +1,7 @@
 /*
 Matrix Manipulation Algorithm
 Written by Matthew Hahn
-Version 0.2.2
+Version 0.2.5
 
 Input command (Add, Multiply, RREF, etc)
 Input desired graphs/values via legal brackets
@@ -9,11 +9,11 @@ Input desired graphs/values via legal brackets
 TODO:
 Main
   -Bulletproof the code
-    -Test each method rigorously and compare to actual results
 
 Matrix_Calculator
+  -RREF doesn't work if starting value is 0
+    -Division by zero problem (If no initial pivot, problems apparently)
   -Add Determinant method
-  -Add Rank method
   -Comment previous methods to more detail
 */
 #include "Matrix_Calculator.cpp"
@@ -21,7 +21,7 @@ Matrix_Calculator
 #include<locale>
 #include<algorithm>
 
-struct UserCommand{
+struct UserCommand {
   std::string Command;
   Matrix M_1, M_2;
   double Constant = INT_MIN;
@@ -42,7 +42,7 @@ void printError(std::string Error) {
 UserCommand ReadIn(std::string UserString) {
   UserCommand toReturn; int i;
   std::vector<std::string> LC{"Add","Sub","Multiply",
-  "Smultiply","Transpose","RREF","Inverse","Rank","Determ",
+  "Smultiply","Transpose","RREF","Inverse","Rank","Det",
   "Exit","Help"};
   try {
     UserString.erase(std::remove(UserString.begin(),UserString.end(),' '), UserString.end());
@@ -117,7 +117,7 @@ UserCommand ReadIn(std::string UserString) {
 }
 
 int main() {
-  printf("Matrix Calculator\nVersion 0.2.2\n\n");
+  printf("Matrix Calculator\nVersion 0.2.5\n\n");
   Matrix_Manipulation *Mod = new Matrix_Manipulation();
   Matrix Matrix_Solution; int Integer_Solution;
   UserCommand UC; std::string UserString;
@@ -185,16 +185,16 @@ int main() {
       if(UC.M_2.empty() && UC.Constant == INT_MIN) {
         if(ValidateSize(UC.M_1) != -1) {
           Integer_Solution = Mod->Rank(UC.M_1);
-          std::cout << Integer_Solution << "\n";
+          std::cout << "  " << Integer_Solution << "\n";
         } else
           printError("Illegal matrix size");
       } else
         printError("Illegal format");
-    } else if(UC.Command == "Determ") {
+    } else if(UC.Command == "Det") {
       if(UC.M_2.empty() && UC.Constant == INT_MIN) {
         if(ValidateSize(UC.M_1) != -1) {
           Integer_Solution = Mod->Determinant(UC.M_1);
-          std::cout << Integer_Solution << "\n";
+          std::cout << "  " << Integer_Solution << "\n";
         } else
           printError("Illegal matrix size");
       } else
@@ -211,7 +211,7 @@ int main() {
       "   -RREF (Reduces a matrix to row reduced echelon form)\n"
       "   -Inverse (Gives the inverse of a given matrix)\n"
       "   -Rank (Gives the rank of a given matrix)\n"
-      "   -Determ (Gives the determinant of a given matrix)\n"
+      "   -Det (Gives the determinant of a given matrix)\n"
       "   -Exit\n\n"
       "  Legal Syntax\n"
       "   -Command{{Row 1}{Row 2}{Row 3}}\n"

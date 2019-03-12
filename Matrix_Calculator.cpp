@@ -1,7 +1,5 @@
 #include<iostream>
 #include<vector>
-#include<fstream>
-#include<sstream>
 #include<stdlib.h>
 #define Matrix std::vector<std::vector<double>>
 
@@ -117,9 +115,13 @@ public:
   }
 
   int Rank(Matrix M) {
-    //Write some code to return the rank of a given matrix
-    //Run RREF on a matrix and count number of non-zero rows
-    return -1;
+    int Rank = 0;
+    Matrix RR_M = RR_Echelon_Form(M, M.size());
+    for(int i=0;i<RR_M.size();++i)
+      for(int j=0;j<RR_M[i].size();++j)
+        if(RR_M[i][j] != 0) {
+          ++Rank; break;
+    } return Rank;
   }
 
   int Determinant(Matrix M) {
