@@ -1,11 +1,12 @@
 #include<iostream>
 #include<vector>
-#include<stdlib.h>
+#include<string>
+#include<algorithm>
 #define Matrix std::vector<std::vector<double>>
 
 class Matrix_Manipulation {
 public:
-  Matrix_Multiplication() {
+  void Matrix_Multiplication() {
 
   }
 

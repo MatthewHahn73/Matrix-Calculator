@@ -1,7 +1,9 @@
+#include "Matrix_Calculator.cpp"
+
 /*
 Matrix Manipulation Algorithm
 Written by Matthew Hahn
-Version 0.2.5
+Version 0.2.6
 
 Input command (Add, Multiply, RREF, etc)
 Input desired graphs/values via legal brackets
@@ -9,6 +11,11 @@ Input desired graphs/values via legal brackets
 TODO:
 Main
   -Bulletproof the code
+    -Code still runs when missing last bracket sometimes
+      -Transpose, Add, etc
+    -Optional
+      -throws unhelpful error when ',' is missing: "Illegal matrix sizes"
+        -similar story with no data inputted, eg. add{{}},{{}}: "Illegal 1st matrix syntax"
 
 Matrix_Calculator
   -RREF doesn't work if starting value is 0
@@ -16,10 +23,6 @@ Matrix_Calculator
   -Add Determinant method
   -Comment previous methods to more detail
 */
-#include "Matrix_Calculator.cpp"
-#include<string>
-#include<locale>
-#include<algorithm>
 
 struct UserCommand {
   std::string Command;
@@ -52,15 +55,19 @@ UserCommand ReadIn(std::string UserString) {
         } else
           toReturn.Command.push_back(UserString[i]);
       } toReturn.Command[0] = toupper(toReturn.Command[0]);
-    if(!(std::find(LC.begin(), LC.end(), toReturn.Command) != LC.end()))
+    if(std::find(LC.begin(), LC.end(), toReturn.Command) != LC.end() && i == UserString.size())
+      throw "End";
+    else if(!(std::find(LC.begin(), LC.end(), toReturn.Command) != LC.end()))
       throw "Unknown Command";
     } catch(const std::exception& e) {
         toReturn.Command = "Illegal command";
         return toReturn;
     } catch(const char *e) {
-        toReturn.Command = e;
-        return toReturn;
-    } std::string Brackets; std::string toPass; int j; int k; int l;
+        if(e == "End")
+          return toReturn;
+        else {
+          toReturn.Command = e; return toReturn;
+    }} std::string Brackets; std::string toPass; int j; int k; int l;
   try {
     for(j=i+1;j<UserString.size();++j) { //Gets the first matrix/parameter to pass
       if(UserString[j] == '{') {
@@ -78,7 +85,7 @@ UserCommand ReadIn(std::string UserString) {
       } else if(UserString[j] == ',' && Brackets.empty())
         break;
   }} catch(const std::invalid_argument& e) {
-    toReturn.Command = "Wrong 1st parameter syntax";
+    toReturn.Command = "Wrong 1st matrix syntax";
     return toReturn;
   } Brackets.clear(); toPass.clear();
   if(j != UserString.size() && UserString[j+1] == '{') {
@@ -97,11 +104,9 @@ UserCommand ReadIn(std::string UserString) {
           toPass.push_back(UserString[k]);
         } else if(UserString[k] == ',' && !Brackets.empty()) {
           toReturn.M_2.back().push_back(std::stod(toPass)); toPass.clear();
-        } else if(UserString[k] == ',' && Brackets.empty())
-          break;
-        } Brackets.clear(); toPass.clear();
+        }} Brackets.clear(); toPass.clear();
       } catch(const std::invalid_argument& e) {
-        toReturn.Command = "Wrong 2nd parameter syntax";
+        toReturn.Command = "Wrong 2nd matrix syntax";
         return toReturn;
       } toPass.clear();
   } else if(j != UserString.size() && (isdigit(UserString[j+1])
@@ -117,7 +122,7 @@ UserCommand ReadIn(std::string UserString) {
 }
 
 int main() {
-  printf("Matrix Calculator\nVersion 0.2.5\n\n");
+  printf("Matrix Calculator v[0.2.6]\n\n");
   Matrix_Manipulation *Mod = new Matrix_Manipulation();
   Matrix Matrix_Solution; int Integer_Solution;
   UserCommand UC; std::string UserString;
