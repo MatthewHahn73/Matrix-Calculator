@@ -78,12 +78,12 @@ public:
       int i=r;
       while(M[i][lead] == 0) {
         ++i;
-        if(rowCount = i) {
+        if(rowCount == i) {
           i=r; ++lead;
           if(colCount == lead) {
             lead--; break;
-        }}
-      } for(int j=0;j<colCount;++j) {
+        }}} 
+      for(int j=0;j<colCount;++j) {
         double temp = M[r][j];
         M[r][j] = M[i][j];
         M[i][j] = temp;
