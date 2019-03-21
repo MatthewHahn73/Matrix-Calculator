@@ -3,21 +3,26 @@
 /*
 Matrix Manipulation Algorithm
 Written by Matthew Hahn
-Version 0.2.9
+Version 0.3.0
 
 Input command (Add, Multiply, RREF, etc)
 Input desired graphs/values via legal brackets
 
 TODO:
 Main
+  -Add in an option to pass operations as parameters for other operations
+    -eg. Add{{1,2,3}{4,5,6}},Inverse{{1,2,3}{5,1,6}}
+    -These operations must return valid results for the mother operation
+      -eg. In given example, the inverse must return a 2x3 matrix
   -Bulletproof the code
     -Optional
       -throws unhelpful error when ',' is missing: "Illegal matrix sizes"
         -similar story with no data inputted, eg. add{{}},{{}}: "Illegal 1st matrix syntax"
 
 Matrix_Calculator
-  -Add Determinant method
   -Comment previous methods to more detail
+  -Add in a subMatrix method
+    -returns a submatrix based on given x and y values to remove
 */
 
 struct UserCommand {
@@ -147,7 +152,7 @@ UserCommand ReadIn(std::string UserString) {
 }
 
 int main() {
-  printf("Matrix Calculator [v0.2.9]\n\n");
+  printf("Matrix Calculator [v0.3.0]\n\n");
   Matrix_Manipulation *Mod = new Matrix_Manipulation();
   Matrix Matrix_Solution; int Integer_Solution;
   UserCommand UC; std::string UserString;
@@ -233,8 +238,9 @@ int main() {
         break;
       case 9:
         if(UC.M_2.empty() && UC.Constant == INT_MIN) {
-          if(ValidateSize(UC.M_1) != -1) {
-            Integer_Solution = Mod->Determinant(UC.M_1);
+          int Size = ValidateSize(UC.M_1);
+          if(Size != -1 && Size == UC.M_1.size()) {
+            Integer_Solution = Mod->Determinant(UC.M_1, UC.M_1.size());
             std::cout << "  " << Integer_Solution << "\n";
           } else
             printError("Illegal matrix size");

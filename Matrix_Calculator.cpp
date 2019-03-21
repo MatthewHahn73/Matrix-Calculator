@@ -2,6 +2,7 @@
 #include<vector>
 #include<string>
 #include<algorithm>
+#include<math.h>
 #define Matrix std::vector<std::vector<double>>
 
 class Matrix_Manipulation {
@@ -82,7 +83,7 @@ public:
           i=r; ++lead;
           if(colCount == lead) {
             lead--; break;
-        }}} 
+        }}}
       for(int j=0;j<colCount;++j) {
         double temp = M[r][j];
         M[r][j] = M[i][j];
@@ -115,6 +116,12 @@ public:
     return M;
   }
 
+  Matrix subMatrix(Matrix M) {
+    Matrix toReturn(M.size()-1, std::vector<double>(M[0].size()-1, 0));
+    return toReturn;
+  }
+
+  //Calculates and returns rank of a matrix
   int Rank(Matrix M) {
     int Rank = 0;
     Matrix RR_M = RR_Echelon_Form(M, M.size());
@@ -125,9 +132,22 @@ public:
     } return Rank;
   }
 
-  int Determinant(Matrix M) {
-    //Write some code to return the determinant of a given matrix
-    //Check linear algebra notes
-    return -1;
+  //Calculates and returns the determinant of a matrix
+  int Determinant(Matrix M, int n) {
+    int det = 0;
+    Matrix subM(M.size(), std::vector<double>(M[0].size(), 0));
+    if(n == 2)
+      return ((M[0][0] * M[1][1]) - (M[1][0] * M[0][1]));
+    else {
+      for(int i=0;i<n;++i) { int subj = 0;
+        for(int j=0;j<n;++j) { int subk = 0;
+          for(int k=0;k<n;++k) {
+            if(k == i)
+              continue;
+            subM[subj][subk] = M[i][j];
+            ++subk;
+        } ++subj;
+      } det = det + (pow(-1, i) * M[0][i] * Determinant(subM, n-1));
+    }} return det;
   }
 };
