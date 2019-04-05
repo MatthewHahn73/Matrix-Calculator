@@ -70,7 +70,7 @@ public:
       }} return TM_1;
   }
 
-  //Row reduces the matrix to either echelon form, RR echelon form, or the identity
+  //Row reduces the matrix to row reduced echelon form
   Matrix RR_Echelon_Form(Matrix M, int rowCount) {
     int lead = 0; int colCount = M[0].size();
     for(int r=0;r<rowCount;++r) {
@@ -101,7 +101,7 @@ public:
       } return M;
     }
 
-  //Gets and returns the multiplicative inverse
+  //Gets and returns the multiplicative inverse of a matrix
   Matrix Inverse(Matrix M) {
     Matrix Identity(M.size(),std::vector<double>(M[0].size(), 0));
     for(int i=0;i<M.size();++i)
@@ -114,11 +114,6 @@ public:
       for(int j=0;j<=M[i].size()/2;++j)
         M[i].erase(M[i].begin());
     return M;
-  }
-
-  Matrix subMatrix(Matrix M) {
-    Matrix toReturn(M.size()-1, std::vector<double>(M[0].size()-1, 0));
-    return toReturn;
   }
 
   //Calculates and returns rank of a matrix
@@ -149,5 +144,13 @@ public:
         } ++subj;
       } det = det + (pow(-1, i) * M[0][i] * Determinant(subM, n-1));
     }} return det;
+  }
+
+  int Onto(Matrix M) {
+    return -1;
+  }
+
+  int One_to_One(Matrix M) {
+    return -1;
   }
 };

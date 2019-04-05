@@ -10,10 +10,6 @@ Input desired graphs/values via legal brackets
 
 TODO:
 Main
-  -Add in an option to pass operations as parameters for other operations
-    -eg. Add{{1,2,3}{4,5,6}},Inverse{{1,2,3}{5,1,6}}
-    -These operations must return valid results for the mother operation
-      -eg. In given example, the inverse must return a 2x3 matrix
   -Bulletproof the code
     -Optional
       -throws unhelpful error when ',' is missing: "Illegal matrix sizes"
@@ -21,16 +17,23 @@ Main
 
 Matrix_Calculator
   -Comment previous methods to more detail
-  -Add in a subMatrix method
-    -returns a submatrix based on given x and y values to remove
+  -Add in onto/one-to-one methods
+    -Check notes
 */
 
+//Prints any error to console to inform user
+void printError(std::string Error) {
+  std::cout << "  Error: " + Error << "; " << "See 'help'\n";
+}
+
+//Storage method for relevant user command data
 struct UserCommand {
   std::string Command, helpCommand;
   Matrix M_1, M_2;
   double Constant = INT_MIN;
 };
 
+//Hashes a string to integer values for easier processing
 int StringHash(std::string toHash) {
   if(toHash == "ADD") return 1;
   if(toHash == "SUB") return 2;
@@ -46,6 +49,7 @@ int StringHash(std::string toHash) {
   return -1;
 }
 
+//Method to determine if a matrix if of valid size (M x M or M x N)
 int ValidateSize(Matrix M) {
   int currentMeta = M[0].size();
   for(int i=0;i<M.size();++i)
@@ -54,36 +58,41 @@ int ValidateSize(Matrix M) {
   return currentMeta;
 }
 
-void printError(std::string Error) {
-  std::cout << "  Error: " + Error << "; " << "See 'help'\n";
-}
-
+//Method to read in user defined commands and extract important information
 UserCommand ReadIn(std::string UserString) {
   UserCommand toReturn; int i;
   std::vector<std::string> LC{"ADD","SUB","MULTIPLY",
   "SMULTIPLY","TRANS","RREF","INVERSE","RANK","DET",
   "EXIT","HELP"};
+
+  //Processes parameter string to determine the user's desired command
   try {
-    UserString.erase(std::remove(UserString.begin(),UserString.end(),' '), UserString.end());
-    for(i=0;i<UserString.size();++i) { //Gets the user Command
-        if(i+1 < UserString.size() && UserString[i+1] == '{') {
+    UserString.erase(std::remove(UserString.begin(),UserString.end(),' '), UserString.end()); //Erase unnecesary space
+    for(i=0;i<UserString.size();++i) {
+        if(i+1 < UserString.size() && UserString[i+1] == '{') { //End of user command reached; Push last char; break loop
           toReturn.Command.push_back(UserString[i]); break;
         } else
-          toReturn.Command.push_back(UserString[i]);
-      } for(int z=0;z<toReturn.Command.size();++z) toReturn.Command[z] = toupper(toReturn.Command[z]);
-    if(std::find(LC.begin(), LC.end(), toReturn.Command) != LC.end() && i == UserString.size())
+          toReturn.Command.push_back(UserString[i]);            //Else push characters to the Command string
+      }
+    for(int z=0;z<toReturn.Command.size();++z) toReturn.Command[z] = toupper(toReturn.Command[z]); //Sets characters to uppercase (easier processing)
+    if(std::find(LC.begin(), LC.end(), toReturn.Command) != LC.end() && i == UserString.size()) //If end of string reached at the end of command processing; throw end exception
       throw "End";
-    else if(!(std::find(LC.begin(), LC.end(), toReturn.Command) != LC.end()))
+    else if(!(std::find(LC.begin(), LC.end(), toReturn.Command) != LC.end())) //If that command is unknown; throw error
       throw "Unknown Command";
-    } catch(const std::exception& e) {
+    } catch(const std::exception& e) { //Illegal command exception; returns relevant information
         toReturn.Command = "Illegal command";
         return toReturn;
-    } catch(const char *e) {
+    } catch(const char *e) {           //End string exception
         if(e == "End")
           return toReturn;
         else {
-          toReturn.Command = e; return toReturn;
-    }} std::string Brackets; std::string toPass; int j; int k; int l;
+          toReturn.Command = e;
+          return toReturn;
+        }
+    }
+
+  //Processes parameter string to determine other critical information (First Matrix)
+  std::string Brackets; std::string toPass; int j; int k; int l;
   try {
     for(j=i+1;j<UserString.size();++j) { //Gets the first matrix/parameter to pass
       if(UserString[j] == '{') {
@@ -92,9 +101,9 @@ UserCommand ReadIn(std::string UserString) {
           toReturn.M_1.push_back(std::vector<double>());
       } else if(UserString[j] == '}') {
         Brackets.pop_back();
-        if(Brackets.size() != 0)
+        if(Brackets.size() != 0) {
           toReturn.M_1.back().push_back(std::stod(toPass)); toPass.clear();
-        if(j == UserString.size()-1 && !Brackets.empty())
+        } if(j == UserString.size()-1 && !Brackets.empty())
           throw "Wrong parentheses syntax";
       } else if((isdigit(UserString[j]) || UserString[j] == '.'
       || UserString[j] == '-') && Brackets.size() == 2) {
@@ -105,14 +114,17 @@ UserCommand ReadIn(std::string UserString) {
           throw "Wrong parentheses syntax";
       } else if(UserString[j] == ',' && Brackets.empty())
         break;
-  }} catch(const std::invalid_argument& e) {
-      toReturn.Command = "Wrong 1st matrix syntax";
+  }} catch(const std::invalid_argument& e) { //If value is read that is not expected
+      toReturn.Command = "Wrong 1st matrix syntax"; //Returns error for that matrix
       return toReturn;
-   } catch (const char *e) {
-      toReturn.Command = e;
+   } catch (const char *e) { //If a string is thrown, must be syntax error
+      toReturn.Command = e; //Returns that error
       return toReturn;
-  } Brackets.clear(); toPass.clear();
-  if(j != UserString.size() && UserString[j+1] == '{') {
+  }
+
+  //Processes parameter string to determine additional critical information if end of string not reached (Second Matrix/Scalar Values)
+  Brackets.clear(); toPass.clear();
+  if(j != UserString.size() && UserString[j+1] == '{') { //Processes string to determine second matrix
     try {
       for(k=j+1;k<UserString.size();++k) { //Gets the second matrix/parameter to pass
         if(UserString[k] == '{') {
@@ -121,9 +133,9 @@ UserCommand ReadIn(std::string UserString) {
             toReturn.M_2.push_back(std::vector<double>());
         } else if(UserString[k] == '}') {
           Brackets.pop_back();
-          if(Brackets.size() != 0)
+          if(Brackets.size() != 0) {
             toReturn.M_2.back().push_back(std::stod(toPass)); toPass.clear();
-          if(k == UserString.size()-1 && !Brackets.empty())
+          } if(k == UserString.size()-1 && !Brackets.empty())
             throw "Wrong parentheses syntax";
         } else if((isdigit(UserString[k]) || UserString[k] == '-'
         || UserString[k] == '.') && Brackets.size() == 2) {
@@ -132,21 +144,21 @@ UserCommand ReadIn(std::string UserString) {
           toReturn.M_2.back().push_back(std::stod(toPass)); toPass.clear();
           if(Brackets.size() == 1)
             throw "Wrong parentheses syntax";
-   }}} catch(const std::invalid_argument& e) {
-        toReturn.Command = "Wrong 2nd matrix syntax";
+   }}} catch(const std::invalid_argument& e) { //If value is read that is not expected
+        toReturn.Command = "Wrong 2nd matrix syntax"; //Returns error for that matrix
         return toReturn;
-     } catch(const char *e) {
-        toReturn.Command = e;
+     } catch(const char *e) { //If a string is thrown, must be syntax error
+        toReturn.Command = e; //Returns that error
         return toReturn;
     } Brackets.clear(); toPass.clear();
   } else if(j != UserString.size() && (isdigit(UserString[j+1])
-  || UserString[j+1] == '-' || UserString[j+1] == '.')) {
+      || UserString[j+1] == '-' || UserString[j+1] == '.')) { //Processes string to determine scalar value(s)
     try {
       for(l=j+1;l<UserString.size();++l)
         toPass.push_back(UserString[l]);
       toReturn.Constant = std::stod(toPass);
-    } catch(const std::exception& e) {
-        toReturn.Command = "Wrong constant syntax";
+    } catch(const std::exception& e) { //If illegal information found
+        toReturn.Command = "Wrong constant syntax"; //Returns that information
         return toReturn;
   }} return toReturn;
 }
