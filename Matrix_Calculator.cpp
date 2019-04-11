@@ -83,7 +83,8 @@ public:
           i=r; ++lead;
           if(colCount == lead) {
             lead--; break;
-        }}}
+          }}
+      }
       for(int j=0;j<colCount;++j) {
         double temp = M[r][j];
         M[r][j] = M[i][j];
@@ -147,10 +148,32 @@ public:
   }
 
   int Onto(Matrix M) {
-    return -1;
+    M = RR_Echelon_Form(M, M.size());
+    for(int i=0;i<M.size();++i)
+      if(!(std::find(M[i].begin(), M[i].end(), 1) != M[i].end()))
+        return 1;
+    return 0;
   }
 
   int One_to_One(Matrix M) {
-    return -1;
+    std::vector<double> tVec;
+    M = RR_Echelon_Form(M, M.size());
+    for(int i=0;i<M[0].size();++i) {
+      for(int j=0;j<M.size();++j)
+        tVec.push_back(M[j][i]);
+      if(!(std::find(tVec.begin(), tVec.end(), 1) != tVec.end()))
+        return 1;
+      tVec.clear();
+    } return 0;
+  }
+
+  std::vector<double> Eigenvalues(Matrix M) {
+    std::vector<double> EV;
+    return EV;
+  }
+
+  std::vector<double> Eigenvectors(Matrix M) {
+    std::vector<double> EV;
+    return EV;
   }
 };
